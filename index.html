@@ -2,492 +2,601 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>寻找生日帽：小章鱼的冒险</title>
-    <!-- 引入可爱的圆体字 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>收集23岁的快乐碎片</title>
     <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
     <style>
-        /* --- 全局样式 --- */
+        /* --- 全局与重置 --- */
+        * { box-sizing: border-box; }
         body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
+            margin: 0; padding: 0; overflow: hidden;
             font-family: 'ZCOOL KuaiLe', cursive, sans-serif;
             background-color: #333;
-            user-select: none;
-            -webkit-user-select: none;
+            user-select: none; -webkit-user-select: none;
         }
 
         /* ==================== 
-           第一部分：游戏界面 
+           UI 层样式 
            ==================== */
         #gameWrapper {
-            position: absolute;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background: linear-gradient(180deg, #a1c4fd 0%, #c2e9fb 100%);
+            position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(180deg, #84fab0 0%, #8fd3f4 100%); /* 清新海域 */
             z-index: 100;
-            display: flex; justify-content: center; align-items: center;
-            transition: opacity 1.5s ease;
+            transition: transform 1s ease-in-out, opacity 1s;
         }
 
         canvas#gameCanvas {
-            border: 4px solid #fff;
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-            background: rgba(255, 255, 255, 0.2);
-            /* 保持画面比例 */
-            max-width: 100%; max-height: 100%;
+            display: block; width: 100%; height: 100%;
         }
 
-        .ui-layer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        /* 顶部进度条区域 */
+        .hud {
+            position: absolute; top: 20px; left: 0; width: 100%;
+            display: flex; flex-direction: column; align-items: center;
             pointer-events: none;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 20;
         }
 
-        .message-box {
+        .count-badge {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 25px; border-radius: 50px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            display: flex; align-items: center; gap: 10px;
+            border: 3px solid #ff9ff3;
+        }
+
+        .hat-icon { font-size: 1.5rem; }
+        .score-text { font-size: 1.8rem; color: #ff6b6b; font-weight: bold; }
+        .target-text { font-size: 1.2rem; color: #aaa; margin-left: 5px; }
+
+        .progress-bar {
+            width: 80%; max-width: 300px; height: 10px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 10px; margin-top: 10px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            width: 0%; height: 100%;
+            background: linear-gradient(90deg, #ff9ff3, #feca57);
+            transition: width 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* 交互提示层 */
+        .ui-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; justify-content: center; align-items: center;
+            pointer-events: none; /* 让点击穿透 */
+        }
+
+        /* 开始按钮框 */
+        .start-card {
             background: rgba(255, 255, 255, 0.95);
-            padding: 25px 40px; border-radius: 25px;
+            padding: 30px; border-radius: 30px;
             text-align: center; pointer-events: auto;
-            box-shadow: 0 10px 25px rgba(50, 50, 93, 0.25);
-            border: 5px solid #ff9ff3;
-            border-bottom-width: 10px;
+            box-shadow: 0 15px 35px rgba(50,50,93,0.2);
+            border: 5px solid #fff;
+            animation: floatUI 3s ease-in-out infinite;
+            max-width: 85%;
         }
 
-        h2 { margin: 0 0 10px 0; color: #ff6b6b; font-size: 2rem; }
-        p.tip { color: #666; font-size: 1.2rem; margin-bottom: 20px; line-height: 1.6; }
+        h2 { margin: 0 0 10px; color: #333; font-size: 1.8rem; }
+        p { color: #666; font-size: 1.1rem; line-height: 1.6; margin-bottom: 20px; }
         
-        button.btn {
-            background: #ff9ff3; border: none; padding: 12px 35px;
+        button.btn-start {
+            background: linear-gradient(45deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%);
+            border: none; padding: 15px 50px;
             font-size: 1.4rem; color: white; border-radius: 50px;
-            cursor: pointer; font-family: 'ZCOOL KuaiLe', sans-serif;
-            transition: transform 0.1s; box-shadow: 0 6px 0 #d65db1;
+            cursor: pointer; font-family: inherit;
+            box-shadow: 0 8px 15px rgba(255, 107, 107, 0.3);
+            transition: transform 0.1s;
         }
-        button.btn:active { transform: translateY(6px); box-shadow: none; }
-
-        .hidden { display: none !important; }
-
-        /* 游戏中的提示 */
-        #gameHint {
-            position: absolute; top: 15%; width: 100%;
-            text-align: center; color: #fff; font-size: 1.5rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-            opacity: 0.8;
-        }
+        button.btn-start:active { transform: scale(0.95); }
 
         /* ==================== 
-           第二部分：庆祝界面 (通关后) 
+           庆祝页面样式 
            ==================== */
         #celebrationWrapper {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            opacity: 0; pointer-events: none;
-            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); /* 温暖的亮色背景 */
-            display: flex; justify-content: center; align-items: center;
-            transition: opacity 2s ease;
-        }
-
-        /* 生日帽和彩旗的CSS复用优化 */
-        .bunting { position: absolute; top: 0; width: 100%; height: 50px; z-index: 5; display: flex; justify-content: center; }
-        .flag { 
-            width: 40px; height: 50px; background: #ff6b6b; margin: 0 10px;
-            clip-path: polygon(0 0, 100% 0, 50% 100%); transform-origin: top center;
-            animation: swing 3s ease-in-out infinite; 
-        }
-        .flag:nth-child(2n){background:#feca57; animation-delay:0.2s} 
-        .flag:nth-child(3n){background:#48dbfb; animation-delay:0.4s}
-        .flag:nth-child(4n){background:#ff9ff3; animation-delay:0.6s}
-
-        .container {
-            position: relative; z-index: 10; text-align: center;
-            width: 100%; max-width: 600px;
-            transform: scale(0.8);
-            animation: popIn 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-            animation-delay: 0.5s; /* 等待游戏淡出 */
-        }
-
-        h1.wishes {
-            font-size: 3rem; color: #ff6b6b; margin-top: 20px;
-            text-shadow: 2px 2px 0 #fff, 4px 4px 0 rgba(0,0,0,0.1);
-            line-height: 1.3;
+            display: none; opacity: 0;
+            background: linear-gradient(135deg, #FFF5C3 0%, #9452A5 100%); /* 梦幻紫金 */
+            justify-content: center; align-items: center;
+            z-index: 50; transition: opacity 2s;
         }
         
-        .message-card {
-            background: #fff; padding: 20px 30px; border-radius: 20px;
-            display: inline-block; margin-top: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            color: #555; font-size: 1.3rem; border: 2px dashed #ff9aa2;
+        #fireworksCanvas { position: absolute; top: 0; left: 0; z-index: 1; }
+
+        .celebrate-content {
+            position: relative; z-index: 10;
+            text-align: center; color: #fff;
+            animation: zoomIn 1s ease forwards;
         }
 
-        /* --- CSS 绘制的小章鱼 --- */
-        .octopus-scene { position: relative; height: 260px; width: 220px; margin: 0 auto; animation: float 3s ease-in-out infinite; }
-        .octopus { position: absolute; top: 70px; left: 50px; width: 120px; z-index: 10; }
-        .head {
-            width: 130px; height: 120px; background: radial-gradient(circle at 30% 30%, #ffc3cd, #ff9aa2);
-            border-radius: 50% 50% 45% 45%; position: relative;
-            box-shadow: inset -5px -5px 15px rgba(0,0,0,0.1);
+        h1.big-title {
+            font-size: 3.5rem; margin: 10px 0;
+            text-shadow: 0 4px 0 #9452A5, 0 10px 20px rgba(0,0,0,0.2);
         }
-        .face { position: absolute; top: 40px; width: 100%; height: 50px; z-index: 20; }
-        .eye { width: 28px; height: 36px; background: #333; border-radius: 50%; position: absolute; top: 0; }
-        .eye.left { left: 28px; } .eye.right { right: 28px; }
-        .eye::after { content: ''; width: 10px; height: 10px; background: white; border-radius: 50%; position: absolute; top: 6px; left: 6px; }
-        .blush { width: 20px; height: 12px; background: #ff6b6b; opacity: 0.5; border-radius: 50%; position: absolute; top: 40px; }
-        .blush.left { left: 15px; } .blush.right { right: 15px; }
-        .mouth {
-            position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%);
-            width: 18px; height: 10px; border-bottom: 4px solid #d6696b; border-radius: 0 0 50% 50%;
+        
+        .badge-23 {
+            display: inline-block;
+            background: #ff6b6b; color: white;
+            font-size: 1.5rem; padding: 5px 20px;
+            border-radius: 50px; transform: rotate(-5deg);
+            box-shadow: 4px 4px 0 rgba(0,0,0,0.1);
+            margin-bottom: 20px;
         }
-        .legs { position: absolute; bottom: -18px; left: 5px; width: 120px; display: flex; justify-content: space-evenly; }
-        .leg { width: 20px; height: 35px; background: #ff9aa2; border-radius: 0 0 20px 20px; animation: legWiggle 2s infinite ease-in-out; }
-        .leg:nth-child(2n){ height: 40px; animation-direction: reverse; }
 
-        /* 生日帽 (通关后才戴上) */
-        .hat {
-            position: absolute; top: -55px; left: 35px; width: 0; height: 0;
-            border-left: 30px solid transparent; border-right: 30px solid transparent;
-            border-bottom: 70px solid #f9ca24; /* 金黄色 */
-            transform: rotate(-10deg); z-index: 30;
-            filter: drop-shadow(2px 2px 5px rgba(0,0,0,0.2));
-            animation: dropHat 0.8s cubic-bezier(1.000, 0.005, 0.245, 1.650);
+        /* 纯CSS章鱼复用 */
+        .octopus-container { position: relative; width: 150px; height: 180px; margin: 0 auto; animation: dance 2s infinite ease-in-out; }
+        .oct-head { 
+            width: 140px; height: 130px; background: #ff9aa2; border-radius: 50% 50% 45% 45%; 
+            position: relative; box-shadow: inset -5px -10px 20px rgba(0,0,0,0.1);
         }
-        .hat::before { content:'★'; position:absolute; top:30px; left:-12px; font-size:20px; color:white; transform:rotate(10deg); }
-        .hat::after { content:''; position:absolute; top:-10px; left:-10px; width:20px; height:20px; background:#ff6b6b; border-radius:50%; }
+        .oct-eye { position: absolute; top: 50px; width: 30px; height: 38px; background: #333; border-radius: 50%; fill: white; }
+        .oct-eye::after { content:''; position:absolute; top:8px; left:8px; width:12px; height:12px; background:#fff; border-radius:50%; }
+        .oct-eye.l { left: 30px; } .oct-eye.r { right: 30px; }
+        .oct-mouth { 
+            position: absolute; bottom: 25px; left: 50%; transform: translate(-50%); 
+            width: 20px; height: 10px; border-bottom: 4px solid #d63384; border-radius: 0 0 50% 50%;
+        }
+        .oct-tentacles { position: absolute; bottom: -20px; left: 10px; display: flex; gap: 10px; }
+        .tentacle { width: 22px; height: 40px; background: #ff9aa2; border-radius: 0 0 20px 20px; }
 
-        @keyframes swing { 0%,100%{transform:rotate(-5deg)} 50%{transform:rotate(5deg)} }
-        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-20px)} }
-        @keyframes legWiggle { 0%,100%{transform:rotate(-10deg)} 50%{transform:rotate(10deg)} }
-        @keyframes popIn { 0%{transform:scale(0); opacity:0} 80%{transform:scale(1.1)} 100%{transform:scale(1); opacity:1} }
-        @keyframes dropHat { 0%{transform: translateY(-200px) rotate(-10deg); opacity:0} 100%{transform: translateY(0) rotate(-10deg); opacity:1} }
+        /* 胜利时的皇冠帽 */
+        .crown {
+            position: absolute; top: -60px; left: 20px;
+            font-size: 80px; transform: rotate(-15deg);
+            filter: drop-shadow(0 5px 10px rgba(0,0,0,0.2));
+            animation: floatHat 2s infinite ease-in-out;
+        }
+
+        @keyframes floatUI { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+        @keyframes dance { 0%,100%{transform:rotate(-3deg) scale(1)} 50%{transform:rotate(3deg) scale(1.05)} }
+        @keyframes zoomIn { from{transform:scale(0);opacity:0} to{transform:scale(1);opacity:1} }
+        @keyframes floatHat { 0%,100%{transform:rotate(-15deg) translateY(0)} 50%{transform:rotate(-15deg) translateY(-10px)} }
 
     </style>
 </head>
 <body>
 
-    <!-- 游戏层 -->
+    <!-- 游戏区域 -->
     <div id="gameWrapper">
-        <canvas id="gameCanvas" width="400" height="600"></canvas>
-        <div id="gameHint" class="hidden">按住上浮 · 松开下潜</div>
+        <canvas id="gameCanvas"></canvas>
         
-        <div class="ui-layer">
-            <!-- 开始界面 -->
-            <div id="startScreen" class="message-box">
-                <h2>寻找生日帽</h2>
-                <div style="font-size:60px; margin:10px;">🐙🎩</div>
-                <p class="tip">小章鱼的生日帽丢在海里了<br>帮它找回来吧！<br><br><span style="font-size:0.9em; color:#888;">(玩法：按住屏幕上浮，轻松简单)</span></p>
-                <button class="btn" onclick="startGame()">出发！</button>
+        <!-- 抬头显示 (HUD) -->
+        <div class="hud" id="hud">
+            <div class="count-badge">
+                <span class="hat-icon">👑</span>
+                <span class="score-text" id="scoreEl">0</span>
+                <span class="target-text">/ 23</span>
             </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
 
-            <!-- 失败界面 -->
-            <div id="gameOverScreen" class="message-box hidden">
-                <h2>哎呀！</h2>
-                <p class="tip">撞到珊瑚了<br>没关系，海里很安全的<br>我们再试一次</p>
-                <button class="btn" onclick="resetGame()">重新出发</button>
+        <!-- 覆盖层：开始/暂停/提示 -->
+        <div class="ui-overlay" id="uiLayer">
+            <div class="start-card" id="startScreen">
+                <h2>🐙 23岁的深海寻宝</h2>
+                <p>今天是小章鱼的23岁生日<br>但庆祝用的帽子散落在海里了<br>快收集 <b>23</b> 个帽子来开启派对！</p>
+                <div style="font-size:0.9rem; color:#999; margin-bottom:15px;">(按住屏幕上浮，安全无痛模式)</div>
+                <button class="btn-start" onclick="startGame()">开始收集</button>
             </div>
         </div>
     </div>
 
-    <!-- 庆祝层 -->
+    <!-- 庆祝区域 -->
     <div id="celebrationWrapper">
-        <canvas id="fireworksCanvas" style="position:absolute;top:0;left:0;z-index:0;"></canvas>
-        <div class="bunting">
-            <div class="flag"></div><div class="flag"></div><div class="flag"></div>
-            <div class="flag"></div><div class="flag"></div><div class="flag"></div>
-        </div>
-
-        <div class="container">
-            <div class="octopus-scene">
-                <!-- 这里画出的章鱼已经戴上了帽子 -->
-                <div class="octopus">
-                    <div class="hat"></div>
-                    <div class="head">
-                        <div class="face">
-                            <div class="eye left"></div><div class="eye right"></div>
-                            <div class="blush left"></div><div class="blush right"></div>
-                            <div class="mouth"></div>
-                        </div>
-                        <div class="legs">
-                            <div class="leg"></div><div class="leg"></div><div class="leg"></div><div class="leg"></div>
-                        </div>
+        <canvas id="fireworksCanvas"></canvas>
+        <div class="celebrate-content">
+            <div class="octopus-container">
+                <div class="crown">👑</div>
+                <div class="oct-head">
+                    <div class="oct-eye l"></div>
+                    <div class="oct-eye r"></div>
+                    <div class="oct-mouth"></div>
+                    <div class="oct-tentacles">
+                        <div class="tentacle"></div><div class="tentacle"></div>
+                        <div class="tentacle"></div><div class="tentacle"></div>
                     </div>
                 </div>
             </div>
-
-            <h1 class="wishes">找到了！<br>祝小章鱼生日快乐！</h1>
-            <div class="message-card">
-                🎂 2025 元旦快乐 &<br>新的一岁也要无忧无虑，自由自在！
-            </div>
+            
+            <div class="badge-23">✨ Happy 23rd ✨</div>
+            <h1 class="big-title">祝小章鱼<br>生日快乐！</h1>
+            <p style="color:#fff; opacity:0.9; margin-top:10px;">愿23岁的你，如在海中自在遨游，<br>所遇皆是惊喜！</p>
         </div>
     </div>
 
     <script>
-        /**
-         * 游戏逻辑 - 简易版
-         */
+        /**************************************
+         * 游戏核心代码
+         **************************************/
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+        const scoreEl = document.getElementById('scoreEl');
+        const progressFill = document.getElementById('progressFill');
         const startScreen = document.getElementById('startScreen');
-        const gameOverScreen = document.getElementById('gameOverScreen');
-        const gameHint = document.getElementById('gameHint');
-        const gameWrapper = document.getElementById('gameWrapper');
-        const celWrapper = document.getElementById('celebrationWrapper');
-
-        let isPlaying = false;
-        let isFloatUp = false; // 是否正在上浮
-        let frames = 0;
-        let score = 0; // 这里的score是穿过的柱子数，用来判断何时出现帽子
-
-        // 配置参数
-        const GAME_SPEED = 1.5; // 速度变慢 (2 -> 1.5)
-        const SPAWN_HAT_SCORE = 2; // 只要过2个柱子就出帽子
-        const GRAVITY_UP = 3;  // 上浮力度
-        const GRAVITY_DOWN = 1.5; // 下沉速度 (非常慢)
-
-        // 输入监听 (PC & Mobile)
-        function setFloat(state) { isFloatUp = state; }
+        const uiLayer = document.getElementById('uiLayer');
+        const hud = document.getElementById('hud');
         
-        window.addEventListener('mousedown', () => setFloat(true));
-        window.addEventListener('mouseup', () => setFloat(false));
-        window.addEventListener('touchstart', (e) => { e.preventDefault(); setFloat(true); }, {passive:false});
-        window.addEventListener('touchend', (e) => { e.preventDefault(); setFloat(false); });
-        // 键盘支持
-        window.addEventListener('keydown', (e) => { if(e.code==='Space') setFloat(true); });
-        window.addEventListener('keyup', (e) => { if(e.code==='Space') setFloat(false); });
-
-        // 小章鱼对象
-        const octopus = {
-            x: 50, y: 300, r: 18,
-            draw: function() {
-                // 圆圆的身体
-                ctx.fillStyle = '#ff9aa2';
-                ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI*2); ctx.fill();
-                // 眼睛
-                ctx.fillStyle = '#fff';
-                ctx.beginPath(); ctx.arc(this.x+8, this.y-4, 6, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = '#333';
-                ctx.beginPath(); ctx.arc(this.x+10, this.y-4, 2, 0, Math.PI*2); ctx.fill();
-                // 小腮红
-                ctx.fillStyle = 'rgba(255,0,0,0.3)';
-                ctx.beginPath(); ctx.arc(this.x, this.y+8, 4, 0, Math.PI*2); ctx.fill();
-            },
-            update: function() {
-                // 如果按住，y减少(上浮)，否则y增加(下沉)
-                if (isFloatUp) {
-                    this.y -= GRAVITY_UP;
-                } else {
-                    this.y += GRAVITY_DOWN;
-                }
-
-                // 边界检测
-                if (this.y < this.r) this.y = this.r; // 顶不到头
-                if (this.y > canvas.height - this.r) this.y = canvas.height - this.r; // 沉不到底
-            }
+        let width, height;
+        const TARGET_SCORE = 23; 
+        
+        // 游戏状态
+        let state = {
+            playing: false,
+            score: 0,
+            frames: 0,
+            speed: 3,
+            finished: false
         };
 
-        // 障碍物管理
-        const pipes = {
-            items: [],
-            width: 50,
-            gap: 220, // 间隙超级大，很难撞到
-            
-            draw: function() {
-                ctx.fillStyle = '#81ecec'; // 珊瑚变得清新一些
-                for(let p of this.items) {
-                    // 上
-                    ctx.fillRect(p.x, 0, this.width, p.top);
-                    // 下
-                    ctx.fillRect(p.x, canvas.height - p.bottom, this.width, p.bottom);
+        // 适配屏幕
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // 输入控制
+        let inputActive = false;
+        const setInput = (val) => { if(state.playing && !state.finished) inputActive = val; };
+        
+        window.addEventListener('mousedown', () => setInput(true));
+        window.addEventListener('mouseup', () => setInput(false));
+        window.addEventListener('touchstart', (e) => { e.preventDefault(); setInput(true); }, {passive:false});
+        window.addEventListener('touchend', (e) => { e.preventDefault(); setInput(false); });
+        window.addEventListener('keydown', (e) => { if(e.code==='Space') setInput(true); });
+        window.addEventListener('keyup', (e) => { if(e.code==='Space') setInput(false); });
+
+        // --- 游戏实体 ---
+
+        // 主角：小章鱼
+        const player = {
+            x: 50, y: height/2, r: 20, vy: 0,
+            draw() {
+                // 判断是否受到伤害（无敌闪烁）
+                if(this.hurtTimer > 0) {
+                    this.hurtTimer--;
+                    if(Math.floor(Date.now()/50) % 2 === 0) return; // 闪烁效果
                 }
-            },
-            update: function() {
-                // 不再生成新的柱子如果已经在等帽子了
-                if (frames % 250 === 0 && score < SPAWN_HAT_SCORE) { 
-                    let topH = Math.random() * (canvas.height - 300) + 50;
-                    this.items.push({
-                        x: canvas.width,
-                        top: topH,
-                        bottom: canvas.height - topH - this.gap,
-                        passed: false
-                    });
-                }
 
-                for(let i=0; i<this.items.length; i++){
-                    let p = this.items[i];
-                    p.x -= GAME_SPEED;
-
-                    // 碰撞检测
-                    if(octopus.x + octopus.r > p.x && octopus.x - octopus.r < p.x + this.width) {
-                        if(octopus.y - octopus.r < p.top || octopus.y + octopus.r > canvas.height - p.bottom) {
-                            endGame();
-                        }
-                    }
-
-                    // 计分
-                    if(p.x + this.width < octopus.x && !p.passed) {
-                        score++;
-                        p.passed = true;
-                    }
-
-                    if(p.x + this.width < 0) {
-                        this.items.shift(); i--;
-                    }
-                }
-            }
-        };
-
-        // 生日帽道具
-        const hatItem = {
-            x: canvas.width + 100,
-            y: 300,
-            size: 40,
-            active: false,
-            
-            draw: function() {
-                if(!this.active) return;
                 ctx.save();
                 ctx.translate(this.x, this.y);
-                // 画一个简单的帽子
-                ctx.fillStyle = '#f9ca24'; // 金色
-                ctx.beginPath();
-                ctx.moveTo(0, -20);
-                ctx.lineTo(15, 20);
-                ctx.lineTo(-15, 20);
-                ctx.closePath();
-                ctx.fill();
-                // 装饰
+                // 倾斜模拟游泳
+                let angle = inputActive ? -0.2 : 0.1;
+                ctx.rotate(angle);
+
+                // 身体
+                ctx.fillStyle = '#ff9aa2';
+                ctx.beginPath(); ctx.arc(0, 0, this.r, 0, Math.PI*2); ctx.fill();
+                
+                // 触手 (简单的动态)
+                ctx.fillStyle = '#ff9aa2';
+                let legOffset = Math.sin(state.frames * 0.2) * 3;
+                ctx.beginPath(); ctx.arc(-10, 15+legOffset, 6, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(0, 18-legOffset, 6, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(10, 15+legOffset, 6, 0, Math.PI*2); ctx.fill();
+
+                // 脸
                 ctx.fillStyle = '#fff';
-                ctx.beginPath(); ctx.arc(0, -20, 5, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(6, -5, 6, 0, Math.PI*2); ctx.fill(); //眼白
+                ctx.fillStyle = '#333';
+                ctx.beginPath(); ctx.arc(8, -5, 2, 0, Math.PI*2); ctx.fill(); //眼珠
+                
+                // 腮红
+                ctx.fillStyle = 'rgba(255,0,0,0.2)';
+                ctx.beginPath(); ctx.arc(0, 5, 4, 0, Math.PI*2); ctx.fill();
+
                 ctx.restore();
             },
-            
-            update: function() {
-                // 分数够了就激活
-                if(score >= SPAWN_HAT_SCORE && !this.active) {
-                    this.active = true;
-                    this.x = canvas.width + 50; 
-                    this.y = canvas.height / 2; // 在中间出现
-                }
+            update() {
+                // 物理
+                if (inputActive) this.vy -= 0.4; // 上浮力
+                else this.vy += 0.2; // 下沉重力 (很轻)
 
-                if(this.active) {
-                    this.x -= GAME_SPEED;
-                    // 上下浮动吸引注意
-                    this.y += Math.sin(frames * 0.05) * 1; 
+                // 阻力
+                this.vy *= 0.95;
+                this.y += this.vy;
 
-                    // 检测是否吃到帽子
-                    // 简单的距离检测
-                    let dx = this.x - octopus.x;
-                    let dy = this.y - octopus.y;
-                    let dist = Math.sqrt(dx*dx + dy*dy);
-                    
-                    if(dist < (octopus.r + 20)) {
-                        winGame();
-                    }
-                }
+                // 边界限制 (且有弹性)
+                if (this.y < this.r) { this.y = this.r; this.vy = 0; }
+                if (this.y > height - this.r) { this.y = height - this.r; this.vy = 0; }
+            },
+            hurtTimer: 0,
+            hurt() {
+                this.hurtTimer = 30; // 半秒无敌
+                // 给一个反方向的力
+                this.vy = -2;
             }
         };
 
-        function loop() {
-            if(!isPlaying) return;
-            
-            ctx.clearRect(0,0,canvas.width,canvas.height);
-            
-            pipes.update();
-            pipes.draw();
-            hatItem.update();
-            hatItem.draw();
-            octopus.update();
-            octopus.draw();
+        // 收集物：帽子
+        class Hat {
+            constructor() {
+                this.r = 15;
+                this.x = width + 50;
+                // 随机高度，但不要太贴边
+                this.y = Math.random() * (height - 100) + 50;
+                this.collected = false;
+                // 有些帽子会上下浮动
+                this.floatOffset = Math.random() * 100;
+            }
+            update() {
+                this.x -= state.speed;
+                this.y += Math.sin((state.frames + this.floatOffset) * 0.05) * 0.5;
+            }
+            draw() {
+                if (this.collected) return;
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                // 金色小帽子
+                ctx.fillStyle = '#ffd700'; 
+                ctx.beginPath(); ctx.moveTo(0, -15); ctx.lineTo(12, 10); ctx.lineTo(-12, 10); ctx.fill();
+                // 装饰
+                ctx.beginPath(); ctx.arc(0,-15,3,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+                ctx.restore();
+            }
+        }
 
-            frames++;
-            requestAnimationFrame(loop);
+        // 障碍物：气泡/水母 (友好的障碍)
+        class Obstacle {
+            constructor() {
+                this.r = 25;
+                this.x = width + 50;
+                this.y = Math.random() * height;
+            }
+            update() {
+                this.x -= state.speed * 0.8; // 飘得比帽子慢一点
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.globalAlpha = 0.6;
+                ctx.fillStyle = '#a29bfe';
+                // 画个简单的水母形状
+                ctx.beginPath(); ctx.arc(0, -5, 20, Math.PI, 0); ctx.fill();
+                ctx.fillRect(-20, -5, 40, 5);
+                // 脚
+                ctx.strokeStyle = '#a29bfe'; ctx.lineWidth = 2;
+                for(let i=-15; i<=15; i+=10) {
+                    ctx.beginPath(); ctx.moveTo(i, 0); 
+                    ctx.lineTo(i + Math.sin(state.frames*0.2)*5, 15); 
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+        }
+
+        // 粒子特效 (吃到东西时)
+        let particles = [];
+        function spawnParticles(x, y) {
+            for(let i=0; i<8; i++) {
+                particles.push({
+                    x: x, y: y,
+                    vx: (Math.random()-0.5)*5, vy: (Math.random()-0.5)*5,
+                    life: 1.0, color: `hsl(${Math.random()*360}, 100%, 70%)`
+                });
+            }
+        }
+
+        // 浮动文字 (+1)
+        let popTexts = [];
+        function spawnText(x, y) {
+            popTexts.push({x:x, y:y, alpha:1, dy:0});
+        }
+
+        // 实体管理器
+        let hats = [];
+        let obstacles = [];
+
+        function resetGame() {
+            state.score = 0;
+            state.playing = true;
+            state.finished = false;
+            state.frames = 0;
+            player.y = height/2; player.vy = 0;
+            hats = [];
+            obstacles = [];
+            particles = [];
+            popTexts = [];
+            updateUI();
         }
 
         function startGame() {
-            startScreen.classList.add('hidden');
-            gameOverScreen.classList.add('hidden');
-            gameHint.classList.remove('hidden');
-            
-            // 重置状态
-            octopus.y = 300;
-            pipes.items = [];
-            score = 0;
-            frames = 0;
-            hatItem.active = false;
-            
-            isPlaying = true;
+            startScreen.style.display = 'none';
+            resetGame();
             loop();
         }
 
-        function resetGame() {
-            startGame();
+        function updateUI() {
+            scoreEl.innerText = state.score;
+            let percent = (state.score / TARGET_SCORE) * 100;
+            progressFill.style.width = percent + '%';
         }
 
-        function endGame() {
-            isPlaying = false;
-            gameHint.classList.add('hidden');
-            gameOverScreen.classList.remove('hidden');
-        }
-
-        function winGame() {
-            isPlaying = false;
-            gameHint.classList.add('hidden');
+        function win() {
+            state.finished = true;
+            state.playing = false;
             
-            // 播放切换动画
-            gameWrapper.style.opacity = '0';
+            // 简单的转场动画
+            const wrapper = document.getElementById('gameWrapper');
+            const cel = document.getElementById('celebrationWrapper');
+            
+            wrapper.style.transform = 'translateY(-100vh)';
             setTimeout(() => {
-                gameWrapper.style.display = 'none';
-                celWrapper.style.opacity = '1';
-                celWrapper.style.pointerEvents = 'auto';
+                wrapper.style.display = 'none';
+                cel.style.display = 'flex';
+                // 强制重流
+                void cel.offsetWidth; 
+                cel.style.opacity = '1';
                 startFireworks();
-            }, 1000);
+            }, 800);
         }
-        
-        // --- 烟花逻辑 (为了代码简洁，使用简易版) ---
-        function startFireworks() {
-            const fwC = document.getElementById('fireworksCanvas');
-            const fwCtx = fwC.getContext('2d');
-            fwC.width = window.innerWidth;
-            fwC.height = window.innerHeight;
-            
-            let particles = [];
-            const colors = ['#eb4d4b', '#f0932b', '#f9ca24', '#6ab04c', '#4834d4', '#be2edd'];
-            
-            function createP(x, y) {
-                for(let i=0; i<30; i++){
-                    particles.push({
-                        x:x, y:y, 
-                        vx: (Math.random()-0.5)*8, 
-                        vy: (Math.random()-0.5)*8, 
-                        color: colors[Math.floor(Math.random()*colors.length)],
-                        life: 1
-                    });
-                }
-            }
-            
-            // 初始放几朵
-            createP(fwC.width/2, fwC.height/3);
-            createP(fwC.width/3, fwC.height/2);
 
-            function fwLoop() {
-                // 拖影
-                fwCtx.globalCompositeOperation = 'destination-out';
-                fwCtx.fillStyle = 'rgba(0,0,0,0.1)';
-                fwCtx.fillRect(0,0,fwC.width,fwC.height);
-                fwCtx.globalCompositeOperation = 'lighter';
-                
-                if(Math.random()<0.05) createP(Math.random()*fwC.width, Math.random()*fwC.height/2);
-                
-                for(let i=particles.length-1; i>=0; i--){
-                    let p = particles[i];
-                    p.x += p.vx; p.y += p.vy;
-                    p.vy += 0.05; // gravity
-                    p.life -= 0.015;
-                    fwCtx.globalAlpha = p.life;
-                    fwCtx.fillStyle = p.color;
-                    fwCtx.beginPath(); fwCtx.arc(p.x, p.y, 3, 0, Math.PI*2); fwCtx.fill();
-                    if(p.life<=0) particles.splice(i,1);
-                }
-                requestAnimationFrame(fwLoop);
+        // --- 主循环 ---
+        function loop() {
+            if (!state.playing) return;
+
+            // 1. 清理与背景
+            ctx.clearRect(0, 0, width, height);
+            
+            // 画一些背景气泡
+            ctx.fillStyle = 'rgba(255,255,255,0.15)';
+            for(let i=0; i<5; i++) {
+                let bx = (state.frames * (2+i) + i*100) % width;
+                let by = (height - (state.frames + i*50) % height);
+                ctx.beginPath(); ctx.arc(bx, by, 5+i*2, 0, Math.PI*2); ctx.fill();
             }
-            fwLoop();
+
+            state.frames++;
+            player.update();
+            player.draw();
+
+            // 2. 生成逻辑
+            // 帽子生成：比较频繁，确保容易收集
+            if (state.frames % 50 === 0) {
+                hats.push(new Hat());
+            }
+            // 障碍生成：比较稀疏
+            if (state.frames > 200 && state.frames % 120 === 0) {
+                obstacles.push(new Obstacle());
+            }
+
+            // 3. 更新帽子
+            for (let i = hats.length - 1; i >= 0; i--) {
+                let h = hats[i];
+                h.update();
+                h.draw();
+
+                // 碰撞判定 (简单的圆圆碰撞)
+                let dx = h.x - player.x;
+                let dy = h.y - player.y;
+                let dist = Math.sqrt(dx*dx + dy*dy);
+                
+                if (!h.collected && dist < (player.r + h.r)) {
+                    // 吃到帽子！
+                    h.collected = true;
+                    state.score++;
+                    updateUI();
+                    spawnParticles(h.x, h.y);
+                    spawnText(h.x, h.y);
+                    
+                    if(state.score >= TARGET_SCORE) {
+                        win();
+                    }
+                }
+
+                // 移除出屏幕的
+                if (h.x < -50) hats.splice(i, 1);
+            }
+
+            // 4. 更新障碍
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                let o = obstacles[i];
+                o.update();
+                o.draw();
+
+                // 碰撞
+                let dx = o.x - player.x;
+                let dy = o.y - player.y;
+                let dist = Math.sqrt(dx*dx + dy*dy);
+                
+                if (dist < (player.r + o.r)) {
+                    if(player.hurtTimer === 0) {
+                        // 撞到了，弹开，但不死
+                        player.hurt();
+                        // 稍微减慢一点点帽子出现速度或屏幕抖动（这里简化为弹开）
+                        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+                        ctx.fillRect(0,0,width,height); // 闪白
+                    }
+                }
+
+                if (o.x < -50) obstacles.splice(i, 1);
+            }
+
+            // 5. 特效绘制
+            // 粒子
+            for (let i=particles.length-1; i>=0; i--) {
+                let p = particles[i];
+                p.x += p.vx; p.y += p.vy; p.life -= 0.05;
+                if(p.life <=0) { particles.splice(i,1); continue; }
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.life;
+                ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill();
+            }
+            // 文字
+            for (let i=popTexts.length-1; i>=0; i--) {
+                let t = popTexts[i];
+                t.dy -= 1; 
+                t.alpha -= 0.02;
+                if(t.alpha <=0) { popTexts.splice(i,1); continue; }
+                ctx.fillStyle = `rgba(255, 255, 255, ${t.alpha})`;
+                ctx.font = 'bold 20px "ZCOOL KuaiLe"';
+                ctx.fillText("+1", t.x, t.y + t.dy);
+            }
+            ctx.globalAlpha = 1;
+
+            requestAnimationFrame(loop);
+        }
+
+        
+        /**************************************
+         * 烟花逻辑 (Celebrating)
+         **************************************/
+        function startFireworks() {
+            const fCanvas = document.getElementById('fireworksCanvas');
+            const fCtx = fCanvas.getContext('2d');
+            fCanvas.width = window.innerWidth;
+            fCanvas.height = window.innerHeight;
+            
+            let fireworks = [];
+
+            class FireworkParticle {
+                constructor(x, y, color) {
+                    this.x = x; this.y = y; this.color = color;
+                    let angle = Math.random() * Math.PI * 2;
+                    let speed = Math.random() * 4 + 2;
+                    this.vx = Math.cos(angle) * speed;
+                    this.vy = Math.sin(angle) * speed;
+                    this.life = 1; this.decay = Math.random() * 0.02 + 0.01;
+                }
+                update() {
+                    this.x += this.vx; this.y += this.vy;
+                    this.vy += 0.05; // gravity
+                    this.vx *= 0.95; this.vy *= 0.95;
+                    this.life -= this.decay;
+                }
+                draw() {
+                    fCtx.fillStyle = this.color;
+                    fCtx.globalAlpha = this.life;
+                    fCtx.beginPath(); fCtx.arc(this.x, this.y, 3, 0, Math.PI*2); fCtx.fill();
+                }
+            }
+
+            function bang(x, y) {
+                const colors = ['#f1c40f', '#e74c3c', '#8e44ad', '#3498db', '#2ecc71'];
+                const c = colors[Math.floor(Math.random()*colors.length)];
+                for(let i=0; i<40; i++) fireworks.push(new FireworkParticle(x, y, c));
+            }
+
+            // 自动放烟花
+            setInterval(() => {
+                bang(Math.random()*fCanvas.width, Math.random()*fCanvas.height/2 + 50);
+            }, 800);
+
+            function fLoop() {
+                fCtx.clearRect(0,0,fCanvas.width, fCanvas.height);
+                for(let i=fireworks.length-1; i>=0; i--) {
+                    fireworks[i].update();
+                    fireworks[i].draw();
+                    if(fireworks[i].life <= 0) fireworks.splice(i,1);
+                }
+                requestAnimationFrame(fLoop);
+            }
+            fLoop();
         }
 
     </script>
