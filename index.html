@@ -3,236 +3,199 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>收集23岁的快乐碎片</title>
+    <title>小章鱼23岁大冒险：混乱海域</title>
     <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
     <style>
-        /* --- 全局与重置 --- */
-        * { box-sizing: border-box; }
+        /* --- 1. 基础设置 --- */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
             margin: 0; padding: 0; overflow: hidden;
             font-family: 'ZCOOL KuaiLe', cursive, sans-serif;
             background-color: #333;
             user-select: none; -webkit-user-select: none;
+            touch-action: none; /* 禁止浏览器默认手势 */
         }
 
-        /* ==================== 
-           UI 层样式 
-           ==================== */
+        /* --- 2. 游戏容器 --- */
         #gameWrapper {
             position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: linear-gradient(180deg, #84fab0 0%, #8fd3f4 100%); /* 清新海域 */
+            background: linear-gradient(180deg, #4facfe 0%, #00f2fe 100%);
             z-index: 100;
-            transition: transform 1s ease-in-out, opacity 1s;
-        }
-
-        canvas#gameCanvas {
-            display: block; width: 100%; height: 100%;
-        }
-
-        /* 顶部进度条区域 */
-        .hud {
-            position: absolute; top: 20px; left: 0; width: 100%;
-            display: flex; flex-direction: column; align-items: center;
-            pointer-events: none;
-            z-index: 20;
-        }
-
-        .count-badge {
-            background: rgba(255, 255, 255, 0.9);
-            padding: 10px 25px; border-radius: 50px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            display: flex; align-items: center; gap: 10px;
-            border: 3px solid #ff9ff3;
-        }
-
-        .hat-icon { font-size: 1.5rem; }
-        .score-text { font-size: 1.8rem; color: #ff6b6b; font-weight: bold; }
-        .target-text { font-size: 1.2rem; color: #aaa; margin-left: 5px; }
-
-        .progress-bar {
-            width: 80%; max-width: 300px; height: 10px;
-            background: rgba(255,255,255,0.5);
-            border-radius: 10px; margin-top: 10px;
             overflow: hidden;
-        }
-        .progress-fill {
-            width: 0%; height: 100%;
-            background: linear-gradient(90deg, #ff9ff3, #feca57);
-            transition: width 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: transform 0.8s ease-in;
         }
 
-        /* 交互提示层 */
+        canvas#gameCanvas { display: block; width: 100%; height: 100%; }
+
+        /* --- 3. UI 界面 (HUD) --- */
+        .hud {
+            position: absolute; top: 10px; left: 10px; right: 10px;
+            display: flex; justify-content: space-between; align-items: start;
+            pointer-events: none; z-index: 20;
+        }
+
+        /* 生命值爱心 */
+        .life-container {
+            font-size: 1.5rem; color: #ff6b6b;
+            background: rgba(255,255,255,0.8);
+            padding: 5px 15px; border-radius: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        /* 分数板 */
+        .score-board {
+            text-align: right;
+            background: rgba(255,255,255,0.9);
+            padding: 8px 15px; border-radius: 20px;
+            border: 3px solid #ffd700;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .score-big { font-size: 2rem; color: #ff6b6b; font-weight: bold; }
+        .score-sub { font-size: 1rem; color: #666; }
+
+        /* --- 4. 弹窗与控制层 --- */
         .ui-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; justify-content: center; align-items: center;
-            pointer-events: none; /* 让点击穿透 */
+            background: rgba(0,0,0,0.4);
+            z-index: 50;
+            backdrop-filter: blur(3px);
         }
+        .hidden { display: none !important; }
 
-        /* 开始按钮框 */
-        .start-card {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 30px; border-radius: 30px;
-            text-align: center; pointer-events: auto;
-            box-shadow: 0 15px 35px rgba(50,50,93,0.2);
-            border: 5px solid #fff;
-            animation: floatUI 3s ease-in-out infinite;
-            max-width: 85%;
+        .card {
+            background: #fff; width: 85%; max-width: 350px;
+            padding: 25px; border-radius: 25px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            border: 5px solid #ff9ff3;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         h2 { margin: 0 0 10px; color: #333; font-size: 1.8rem; }
-        p { color: #666; font-size: 1.1rem; line-height: 1.6; margin-bottom: 20px; }
+        p { color: #666; font-size: 1.1rem; line-height: 1.5; margin-bottom: 20px; }
         
-        button.btn-start {
-            background: linear-gradient(45deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%);
-            border: none; padding: 15px 50px;
-            font-size: 1.4rem; color: white; border-radius: 50px;
+        button.btn {
+            background: linear-gradient(to right, #ff9ff3, #feca57);
+            border: none; padding: 12px 35px;
+            font-size: 1.3rem; color: white; border-radius: 50px;
             cursor: pointer; font-family: inherit;
-            box-shadow: 0 8px 15px rgba(255, 107, 107, 0.3);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
             transition: transform 0.1s;
+            outline: none;
+            /* 关键：确保按钮可点击 */
+            pointer-events: auto;
+            touch-action: manipulation;
         }
-        button.btn-start:active { transform: scale(0.95); }
+        button.btn:active { transform: scale(0.95); background: #ff6b6b; }
 
-        /* ==================== 
-           庆祝页面样式 
-           ==================== */
+        /* --- 5. 庆祝页面 --- */
         #celebrationWrapper {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: none; opacity: 0;
-            background: linear-gradient(135deg, #FFF5C3 0%, #9452A5 100%); /* 梦幻紫金 */
+            background: linear-gradient(135deg, #2a0845 0%, #6441a5 100%);
             justify-content: center; align-items: center;
-            z-index: 50; transition: opacity 2s;
+            z-index: 200; transition: opacity 1.5s;
         }
+        .cel-content { position: relative; z-index: 10; text-align: center; color: white; }
         
-        #fireworksCanvas { position: absolute; top: 0; left: 0; z-index: 1; }
+        /* 纯CSS 章鱼展示 */
+        .oct-show { position: relative; width: 160px; height: 180px; margin: 0 auto 20px; animation: float 3s infinite ease-in-out; }
+        .oct-head { width: 140px; height: 130px; background: #ff9aa2; border-radius: 50% 50% 45% 45%; position: relative; }
+        .oct-eye { position: absolute; top: 45px; width: 32px; height: 40px; background: #333; border-radius: 50%; }
+        .oct-eye.l { left: 28px; } .oct-eye.r { right: 28px; }
+        .oct-eye::after{ content:''; position:absolute; top:8px; left:8px; width:12px; height:12px; background:#fff; border-radius:50%;}
+        .oct-mouth { position: absolute; bottom: 20px; left: 50%; transform: translate(-50%); width: 20px; height: 10px; border-bottom: 4px solid #d63384; border-radius:0 0 50% 50%; }
+        .hat-final { position: absolute; top: -60px; left: 10px; font-size: 80px; transform: rotate(-15deg); }
+        h1.win-title { font-size: 3rem; margin: 10px 0; text-shadow: 0 5px 15px rgba(0,0,0,0.5); }
 
-        .celebrate-content {
-            position: relative; z-index: 10;
-            text-align: center; color: #fff;
-            animation: zoomIn 1s ease forwards;
-        }
-
-        h1.big-title {
-            font-size: 3.5rem; margin: 10px 0;
-            text-shadow: 0 4px 0 #9452A5, 0 10px 20px rgba(0,0,0,0.2);
-        }
-        
-        .badge-23 {
-            display: inline-block;
-            background: #ff6b6b; color: white;
-            font-size: 1.5rem; padding: 5px 20px;
-            border-radius: 50px; transform: rotate(-5deg);
-            box-shadow: 4px 4px 0 rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-
-        /* 纯CSS章鱼复用 */
-        .octopus-container { position: relative; width: 150px; height: 180px; margin: 0 auto; animation: dance 2s infinite ease-in-out; }
-        .oct-head { 
-            width: 140px; height: 130px; background: #ff9aa2; border-radius: 50% 50% 45% 45%; 
-            position: relative; box-shadow: inset -5px -10px 20px rgba(0,0,0,0.1);
-        }
-        .oct-eye { position: absolute; top: 50px; width: 30px; height: 38px; background: #333; border-radius: 50%; fill: white; }
-        .oct-eye::after { content:''; position:absolute; top:8px; left:8px; width:12px; height:12px; background:#fff; border-radius:50%; }
-        .oct-eye.l { left: 30px; } .oct-eye.r { right: 30px; }
-        .oct-mouth { 
-            position: absolute; bottom: 25px; left: 50%; transform: translate(-50%); 
-            width: 20px; height: 10px; border-bottom: 4px solid #d63384; border-radius: 0 0 50% 50%;
-        }
-        .oct-tentacles { position: absolute; bottom: -20px; left: 10px; display: flex; gap: 10px; }
-        .tentacle { width: 22px; height: 40px; background: #ff9aa2; border-radius: 0 0 20px 20px; }
-
-        /* 胜利时的皇冠帽 */
-        .crown {
-            position: absolute; top: -60px; left: 20px;
-            font-size: 80px; transform: rotate(-15deg);
-            filter: drop-shadow(0 5px 10px rgba(0,0,0,0.2));
-            animation: floatHat 2s infinite ease-in-out;
-        }
-
-        @keyframes floatUI { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
-        @keyframes dance { 0%,100%{transform:rotate(-3deg) scale(1)} 50%{transform:rotate(3deg) scale(1.05)} }
-        @keyframes zoomIn { from{transform:scale(0);opacity:0} to{transform:scale(1);opacity:1} }
-        @keyframes floatHat { 0%,100%{transform:rotate(-15deg) translateY(0)} 50%{transform:rotate(-15deg) translateY(-10px)} }
+        @keyframes popIn { 0%{transform: scale(0.5); opacity:0} 100%{transform: scale(1); opacity:1} }
+        @keyframes float { 0%,100%{transform: translateY(0)} 50%{transform: translateY(-20px)} }
+        @keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 100% { transform: translate(-1px, -2px) rotate(-1deg); } }
 
     </style>
 </head>
 <body>
 
-    <!-- 游戏区域 -->
     <div id="gameWrapper">
         <canvas id="gameCanvas"></canvas>
         
-        <!-- 抬头显示 (HUD) -->
-        <div class="hud" id="hud">
-            <div class="count-badge">
-                <span class="hat-icon">👑</span>
-                <span class="score-text" id="scoreEl">0</span>
-                <span class="target-text">/ 23</span>
-            </div>
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressFill"></div>
+        <!-- 游戏中的显示 -->
+        <div class="hud">
+            <div class="life-container" id="lifeEl">❤❤❤</div>
+            <div class="score-board">
+                <div class="score-big"><span id="scoreEl">0</span>/23</div>
+                <div class="score-sub">收集帽子</div>
             </div>
         </div>
 
-        <!-- 覆盖层：开始/暂停/提示 -->
-        <div class="ui-overlay" id="uiLayer">
-            <div class="start-card" id="startScreen">
-                <h2>🐙 23岁的深海寻宝</h2>
-                <p>今天是小章鱼的23岁生日<br>但庆祝用的帽子散落在海里了<br>快收集 <b>23</b> 个帽子来开启派对！</p>
-                <div style="font-size:0.9rem; color:#999; margin-bottom:15px;">(按住屏幕上浮，安全无痛模式)</div>
-                <button class="btn-start" onclick="startGame()">开始收集</button>
+        <!-- 1. 开始菜单 -->
+        <div class="ui-overlay" id="startScreen">
+            <div class="card">
+                <h2>🐙 混乱海域</h2>
+                <p>今天是小章鱼的23岁生日<br>收集 <b style="color:#feca57">23</b> 个帽子来开派对！</p>
+                <p style="font-size:0.9rem; text-align:left; background:#f0f0f0; padding:10px; border-radius:10px;">
+                    <b>✨ 玩法：</b><br>
+                    👆 按住屏幕 = 上浮<br>
+                    👇 松手 = 下潜<br>
+                    💕 吃蛋糕回血，躲开海胆和臭鞋子！
+                </p>
+                <button class="btn" id="startBtn">开始冒险</button>
+            </div>
+        </div>
+
+        <!-- 2. 失败/暂停菜单 -->
+        <div class="ui-overlay hidden" id="gameOverScreen">
+            <div class="card">
+                <h2>😵 晕倒了！</h2>
+                <p>海里的垃圾太多了...<br>小章鱼需要休息一下。</p>
+                <button class="btn" id="retryBtn">再试一次</button>
             </div>
         </div>
     </div>
 
-    <!-- 庆祝区域 -->
     <div id="celebrationWrapper">
-        <canvas id="fireworksCanvas"></canvas>
-        <div class="celebrate-content">
-            <div class="octopus-container">
-                <div class="crown">👑</div>
+        <canvas id="fwCanvas" style="position:absolute;top:0;left:0;"></canvas>
+        <div class="cel-content">
+            <div class="oct-show">
+                <div class="hat-final">👑</div>
                 <div class="oct-head">
-                    <div class="oct-eye l"></div>
-                    <div class="oct-eye r"></div>
+                    <div class="oct-eye l"></div><div class="oct-eye r"></div>
                     <div class="oct-mouth"></div>
-                    <div class="oct-tentacles">
-                        <div class="tentacle"></div><div class="tentacle"></div>
-                        <div class="tentacle"></div><div class="tentacle"></div>
-                    </div>
                 </div>
             </div>
-            
-            <div class="badge-23">✨ Happy 23rd ✨</div>
-            <h1 class="big-title">祝小章鱼<br>生日快乐！</h1>
-            <p style="color:#fff; opacity:0.9; margin-top:10px;">愿23岁的你，如在海中自在遨游，<br>所遇皆是惊喜！</p>
+            <h1 class="win-title">生日快乐！</h1>
+            <p style="font-size:1.4rem;">23岁也要可可爱爱，<br>每天都有蛋糕吃！🎂</p>
         </div>
     </div>
 
     <script>
-        /**************************************
+        /**
          * 游戏核心代码
-         **************************************/
+         */
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const scoreEl = document.getElementById('scoreEl');
-        const progressFill = document.getElementById('progressFill');
+        const lifeEl = document.getElementById('lifeEl');
         const startScreen = document.getElementById('startScreen');
-        const uiLayer = document.getElementById('uiLayer');
-        const hud = document.getElementById('hud');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const gameWrapper = document.getElementById('gameWrapper');
         
         let width, height;
-        const TARGET_SCORE = 23; 
-        
-        // 游戏状态
-        let state = {
-            playing: false,
-            score: 0,
-            frames: 0,
-            speed: 3,
-            finished: false
-        };
+        const TARGET = 23;
 
-        // 适配屏幕
+        // 绑定按钮事件 (修复移动端点击问题)
+        // 使用 click 事件即可，但要注意不要让 global touchstart 拦截
+        document.getElementById('startBtn').addEventListener('click', (e) => {
+            e.stopPropagation(); // 阻止冒泡
+            startGame();
+        });
+        document.getElementById('retryBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            startGame();
+        });
+
+        // 屏幕适配
         function resize() {
             width = canvas.width = window.innerWidth;
             height = canvas.height = window.innerHeight;
@@ -240,363 +203,416 @@
         window.addEventListener('resize', resize);
         resize();
 
-        // 输入控制
+        // --- 游戏状态 ---
+        let state = {
+            playing: false,
+            frames: 0,
+            score: 0,
+            hp: 3,
+            speed: 3.5 // 稍微快一点，更刺激
+        };
+
         let inputActive = false;
-        const setInput = (val) => { if(state.playing && !state.finished) inputActive = val; };
+
+        // --- 输入监听 ---
+        // 关键修复：判断点击目标，如果是UI按钮则不要触发游戏内的上浮
+        function handleInputStart(e) {
+            if (e.target.tagName === 'BUTTON') return;
+            if (state.playing) {
+                // e.preventDefault(); // 视情况开启，有时候会阻止默认滚动
+                inputActive = true;
+            }
+        }
         
-        window.addEventListener('mousedown', () => setInput(true));
-        window.addEventListener('mouseup', () => setInput(false));
-        window.addEventListener('touchstart', (e) => { e.preventDefault(); setInput(true); }, {passive:false});
-        window.addEventListener('touchend', (e) => { e.preventDefault(); setInput(false); });
-        window.addEventListener('keydown', (e) => { if(e.code==='Space') setInput(true); });
-        window.addEventListener('keyup', (e) => { if(e.code==='Space') setInput(false); });
+        function handleInputEnd(e) {
+            inputActive = false;
+        }
 
-        // --- 游戏实体 ---
+        window.addEventListener('mousedown', handleInputStart);
+        window.addEventListener('touchstart', handleInputStart, {passive: false});
+        
+        window.addEventListener('mouseup', handleInputEnd);
+        window.addEventListener('touchend', handleInputEnd);
+        
+        window.addEventListener('keydown', (e) => { if(e.code==='Space') inputActive = true; });
+        window.addEventListener('keyup', (e) => { if(e.code==='Space') inputActive = false; });
 
-        // 主角：小章鱼
+        // --- 实体类定义 ---
+
+        // 主角
         const player = {
-            x: 50, y: height/2, r: 20, vy: 0,
+            x: 50, y: height/2, r: 22, vy: 0,
+            hurtTimer: 0, // 无敌时间
             draw() {
-                // 判断是否受到伤害（无敌闪烁）
+                // 受伤闪烁
                 if(this.hurtTimer > 0) {
                     this.hurtTimer--;
-                    if(Math.floor(Date.now()/50) % 2 === 0) return; // 闪烁效果
+                    if(Math.floor(Date.now()/50)%2===0) return;
                 }
 
                 ctx.save();
                 ctx.translate(this.x, this.y);
-                // 倾斜模拟游泳
-                let angle = inputActive ? -0.2 : 0.1;
-                ctx.rotate(angle);
+                // 旋转身体
+                let rot = inputActive ? -0.3 : 0.2;
+                ctx.rotate(rot);
 
                 // 身体
                 ctx.fillStyle = '#ff9aa2';
-                ctx.beginPath(); ctx.arc(0, 0, this.r, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(0,0,this.r,0,Math.PI*2); ctx.fill();
                 
-                // 触手 (简单的动态)
-                ctx.fillStyle = '#ff9aa2';
-                let legOffset = Math.sin(state.frames * 0.2) * 3;
-                ctx.beginPath(); ctx.arc(-10, 15+legOffset, 6, 0, Math.PI*2); ctx.fill();
-                ctx.beginPath(); ctx.arc(0, 18-legOffset, 6, 0, Math.PI*2); ctx.fill();
-                ctx.beginPath(); ctx.arc(10, 15+legOffset, 6, 0, Math.PI*2); ctx.fill();
-
-                // 脸
+                // 表情变化
                 ctx.fillStyle = '#fff';
-                ctx.beginPath(); ctx.arc(6, -5, 6, 0, Math.PI*2); ctx.fill(); //眼白
-                ctx.fillStyle = '#333';
-                ctx.beginPath(); ctx.arc(8, -5, 2, 0, Math.PI*2); ctx.fill(); //眼珠
+                // 眼睛
+                if(this.hurtTimer > 0) {
+                     // 受伤眼 X X
+                    ctx.strokeStyle = '#333'; ctx.lineWidth=2;
+                    ctx.beginPath(); ctx.moveTo(4,-8); ctx.lineTo(12,-2); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(12,-8); ctx.lineTo(4,-2); ctx.stroke();
+                } else {
+                    ctx.beginPath(); ctx.arc(8,-5,6,0,Math.PI*2); ctx.fill();
+                    ctx.fillStyle='#333'; ctx.beginPath(); ctx.arc(10,-5,2,0,Math.PI*2); ctx.fill();
+                }
                 
-                // 腮红
-                ctx.fillStyle = 'rgba(255,0,0,0.2)';
-                ctx.beginPath(); ctx.arc(0, 5, 4, 0, Math.PI*2); ctx.fill();
+                // 触手摆动
+                ctx.fillStyle = '#ff9aa2';
+                let legY = Math.sin(state.frames * 0.2) * 4;
+                ctx.beginPath(); ctx.arc(-10, 18+legY, 7, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(5, 20-legY, 7, 0, Math.PI*2); ctx.fill();
 
                 ctx.restore();
             },
             update() {
-                // 物理
-                if (inputActive) this.vy -= 0.4; // 上浮力
-                else this.vy += 0.2; // 下沉重力 (很轻)
-
-                // 阻力
-                this.vy *= 0.95;
+                if(inputActive) this.vy -= 0.45; // 上浮力度
+                else this.vy += 0.25; // 下潜重力
+                
+                this.vy *= 0.96; // 阻力
                 this.y += this.vy;
 
-                // 边界限制 (且有弹性)
-                if (this.y < this.r) { this.y = this.r; this.vy = 0; }
-                if (this.y > height - this.r) { this.y = height - this.r; this.vy = 0; }
-            },
-            hurtTimer: 0,
-            hurt() {
-                this.hurtTimer = 30; // 半秒无敌
-                // 给一个反方向的力
-                this.vy = -2;
+                // 碰到天花板或地板
+                if(this.y < this.r) { this.y = this.r; this.vy = 0; }
+                if(this.y > height - this.r) { 
+                    this.y = height - this.r; 
+                    // 碰到底部也稍微弹一下
+                    this.vy = -1; 
+                }
             }
         };
 
-        // 收集物：帽子
-        class Hat {
+        // 物品类 (基类)
+        class Item {
             constructor() {
-                this.r = 15;
                 this.x = width + 50;
-                // 随机高度，但不要太贴边
                 this.y = Math.random() * (height - 100) + 50;
-                this.collected = false;
-                // 有些帽子会上下浮动
-                this.floatOffset = Math.random() * 100;
+                this.markedForDeletion = false;
             }
             update() {
                 this.x -= state.speed;
-                this.y += Math.sin((state.frames + this.floatOffset) * 0.05) * 0.5;
+                if(this.x < -100) this.markedForDeletion = true;
+            }
+            draw() {} // 子类实现
+            checkCollision(p) {
+                // 简单的圆形碰撞
+                let dx = this.x - p.x;
+                let dy = this.y - p.y;
+                let dist = Math.sqrt(dx*dx + dy*dy);
+                return dist < (p.r + this.r);
+            }
+        }
+
+        // 1. 帽子 (收集目标)
+        class Hat extends Item {
+            constructor() { super(); this.r = 18; this.offset = Math.random()*100; }
+            update() {
+                super.update();
+                this.y += Math.sin((state.frames + this.offset)*0.05) * 0.5; // 上下浮动
             }
             draw() {
-                if (this.collected) return;
-                ctx.save();
-                ctx.translate(this.x, this.y);
-                // 金色小帽子
-                ctx.fillStyle = '#ffd700'; 
-                ctx.beginPath(); ctx.moveTo(0, -15); ctx.lineTo(12, 10); ctx.lineTo(-12, 10); ctx.fill();
-                // 装饰
-                ctx.beginPath(); ctx.arc(0,-15,3,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+                ctx.save(); ctx.translate(this.x, this.y);
+                ctx.fillStyle = '#ffd700'; // 金色
+                ctx.beginPath(); ctx.moveTo(0,-20); ctx.lineTo(15,10); ctx.lineTo(-15,10); ctx.fill();
+                ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(0,-20,4,0,Math.PI*2); ctx.fill();
                 ctx.restore();
             }
         }
 
-        // 障碍物：气泡/水母 (友好的障碍)
-        class Obstacle {
-            constructor() {
-                this.r = 25;
-                this.x = width + 50;
-                this.y = Math.random() * height;
-            }
-            update() {
-                this.x -= state.speed * 0.8; // 飘得比帽子慢一点
+        // 2. 蛋糕 (回血, 稀有)
+        class Cake extends Item {
+            constructor() { 
+                super(); 
+                this.r = 20; 
+                // 蛋糕稍微大一点，容易看到
             }
             draw() {
-                ctx.save();
-                ctx.translate(this.x, this.y);
-                ctx.globalAlpha = 0.6;
-                ctx.fillStyle = '#a29bfe';
-                // 画个简单的水母形状
-                ctx.beginPath(); ctx.arc(0, -5, 20, Math.PI, 0); ctx.fill();
-                ctx.fillRect(-20, -5, 40, 5);
-                // 脚
-                ctx.strokeStyle = '#a29bfe'; ctx.lineWidth = 2;
-                for(let i=-15; i<=15; i+=10) {
-                    ctx.beginPath(); ctx.moveTo(i, 0); 
-                    ctx.lineTo(i + Math.sin(state.frames*0.2)*5, 15); 
-                    ctx.stroke();
+                ctx.save(); ctx.translate(this.x, this.y);
+                // 蛋糕体
+                ctx.fillStyle = '#fff0f5'; ctx.fillRect(-15, -10, 30, 20);
+                // 奶油层
+                ctx.fillStyle = '#ff6b6b'; ctx.fillRect(-15, -10, 30, 5);
+                // 樱桃
+                ctx.fillStyle = '#e55039'; ctx.beginPath(); ctx.arc(0, -12, 5, 0, Math.PI*2); ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // 3. 海胆 (旋转障碍, 小)
+        class Urchin extends Item {
+            constructor() { super(); this.r = 20; this.angle = 0; }
+            update() {
+                super.update();
+                this.angle += 0.1;
+            }
+            draw() {
+                ctx.save(); ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                ctx.fillStyle = '#2d3436';
+                ctx.beginPath(); ctx.arc(0,0,10,0,Math.PI*2); ctx.fill();
+                // 刺
+                for(let i=0; i<8; i++) {
+                    ctx.rotate(Math.PI/4);
+                    ctx.beginPath(); ctx.moveTo(0,-10); ctx.lineTo(3,-25); ctx.lineTo(-3,-25); ctx.fill();
                 }
                 ctx.restore();
             }
         }
 
-        // 粒子特效 (吃到东西时)
+        // 4. 臭靴子 (随机旋转垃圾)
+        class Boot extends Item {
+            constructor() { 
+                super(); 
+                this.r = 25; 
+                this.spin = (Math.random()-0.5) * 0.05; 
+                this.rot = 0;
+            }
+            update() { super.update(); this.rot += this.spin; }
+            draw() {
+                ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rot);
+                ctx.fillStyle = '#636e72'; 
+                // 画一个L形
+                ctx.beginPath(); 
+                ctx.moveTo(-10, -20); ctx.lineTo(10, -20); 
+                ctx.lineTo(10, 10); ctx.lineTo(25, 10); 
+                ctx.lineTo(25, 25); ctx.lineTo(-10, 25); 
+                ctx.closePath(); ctx.fill();
+                // 臭气
+                ctx.fillStyle = '#55efc4'; ctx.globalAlpha=0.6;
+                ctx.beginPath(); ctx.arc(0, -30, 5, 0, Math.PI*2); ctx.fill();
+                ctx.globalAlpha=1;
+                ctx.restore();
+            }
+        }
+
+        // 5. 铁锚 (固定障碍, 较大)
+        class Anchor extends Item {
+            constructor() {
+                super();
+                this.r = 30;
+                // 要么在顶上，要么在底下
+                if (Math.random() > 0.5) {
+                    this.y = 40; // 顶
+                    this.isTop = true;
+                } else {
+                    this.y = height - 40; // 底
+                    this.isTop = false;
+                }
+            }
+            draw() {
+                ctx.save(); ctx.translate(this.x, this.y);
+                ctx.fillStyle = '#2c3e50';
+                // 锚身
+                if(this.isTop) {
+                    ctx.fillRect(-5, -50, 10, 60); // 链条向上
+                    ctx.beginPath(); ctx.arc(0, 10, 20, 0, Math.PI, false); ctx.lineTo(0,0); ctx.fill();
+                } else {
+                    ctx.fillRect(-5, -10, 10, 60); // 链条向下(假装)
+                    ctx.beginPath(); ctx.arc(0, -10, 20, 0, Math.PI, true); ctx.lineTo(0,0); ctx.fill();
+                }
+                ctx.restore();
+            }
+        }
+
+        // --- 管理器 ---
+        let items = [];
         let particles = [];
-        function spawnParticles(x, y) {
-            for(let i=0; i<8; i++) {
+
+        function updateHUD() {
+            scoreEl.innerText = state.score;
+            // 渲染心心
+            let hearts = '';
+            for(let i=0; i<state.hp; i++) hearts += '❤';
+            for(let i=state.hp; i<3; i++) hearts += '🤍'; // 空心
+            lifeEl.innerText = hearts;
+        }
+
+        function spawnParticles(x, y, color) {
+            for(let i=0; i<10; i++) {
                 particles.push({
                     x: x, y: y,
-                    vx: (Math.random()-0.5)*5, vy: (Math.random()-0.5)*5,
-                    life: 1.0, color: `hsl(${Math.random()*360}, 100%, 70%)`
+                    vx: (Math.random()-0.5)*8, vy: (Math.random()-0.5)*8,
+                    life: 1, color: color
                 });
             }
         }
 
-        // 浮动文字 (+1)
-        let popTexts = [];
-        function spawnText(x, y) {
-            popTexts.push({x:x, y:y, alpha:1, dy:0});
-        }
-
-        // 实体管理器
-        let hats = [];
-        let obstacles = [];
-
-        function resetGame() {
-            state.score = 0;
-            state.playing = true;
-            state.finished = false;
-            state.frames = 0;
-            player.y = height/2; player.vy = 0;
-            hats = [];
-            obstacles = [];
-            particles = [];
-            popTexts = [];
-            updateUI();
-        }
-
         function startGame() {
-            startScreen.style.display = 'none';
-            resetGame();
+            startScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            state.playing = true;
+            state.score = 0;
+            state.hp = 3;
+            state.frames = 0;
+            items = [];
+            particles = [];
+            player.y = height/2; player.vy = 0; player.hurtTimer = 0;
+            
+            updateHUD();
             loop();
         }
 
-        function updateUI() {
-            scoreEl.innerText = state.score;
-            let percent = (state.score / TARGET_SCORE) * 100;
-            progressFill.style.width = percent + '%';
+        function gameOver() {
+            state.playing = false;
+            // 震动屏幕效果
+            gameWrapper.style.animation = 'shake 0.5s';
+            setTimeout(() => gameWrapper.style.animation = '', 500);
+            
+            setTimeout(() => {
+                gameOverScreen.classList.remove('hidden');
+            }, 500);
         }
 
-        function win() {
-            state.finished = true;
+        function gameWin() {
             state.playing = false;
-            
-            // 简单的转场动画
-            const wrapper = document.getElementById('gameWrapper');
+            // 转场
             const cel = document.getElementById('celebrationWrapper');
-            
-            wrapper.style.transform = 'translateY(-100vh)';
+            gameWrapper.style.transform = 'translateY(-100vh)';
+            cel.style.display = 'flex';
             setTimeout(() => {
-                wrapper.style.display = 'none';
-                cel.style.display = 'flex';
-                // 强制重流
-                void cel.offsetWidth; 
-                cel.style.opacity = '1';
+                cel.style.opacity = 1;
                 startFireworks();
-            }, 800);
+            }, 500);
+        }
+
+        // 统一生成逻辑
+        function spawner() {
+            // 帽子：频率较高
+            if(state.frames % 60 === 0) items.push(new Hat());
+            
+            // 障碍物：随机混合
+            if(state.frames % 90 === 0) {
+                let r = Math.random();
+                if(r < 0.4) items.push(new Urchin());
+                else if(r < 0.7) items.push(new Boot());
+                else items.push(new Anchor());
+            }
+
+            // 蛋糕：稀有，如果血少则概率增加
+            let cakeRate = state.hp < 3 ? 0.005 : 0.001; 
+            if(Math.random() < cakeRate) items.push(new Cake());
         }
 
         // --- 主循环 ---
         function loop() {
-            if (!state.playing) return;
-
-            // 1. 清理与背景
-            ctx.clearRect(0, 0, width, height);
+            if(!state.playing) return;
             
-            // 画一些背景气泡
-            ctx.fillStyle = 'rgba(255,255,255,0.15)';
-            for(let i=0; i<5; i++) {
-                let bx = (state.frames * (2+i) + i*100) % width;
-                let by = (height - (state.frames + i*50) % height);
-                ctx.beginPath(); ctx.arc(bx, by, 5+i*2, 0, Math.PI*2); ctx.fill();
-            }
-
+            ctx.clearRect(0,0,width,height);
             state.frames++;
+
             player.update();
             player.draw();
+            
+            spawner();
 
-            // 2. 生成逻辑
-            // 帽子生成：比较频繁，确保容易收集
-            if (state.frames % 50 === 0) {
-                hats.push(new Hat());
-            }
-            // 障碍生成：比较稀疏
-            if (state.frames > 200 && state.frames % 120 === 0) {
-                obstacles.push(new Obstacle());
-            }
+            // 更新物品
+            for (let i = items.length - 1; i >= 0; i--) {
+                let it = items[i];
+                it.update();
+                it.draw();
 
-            // 3. 更新帽子
-            for (let i = hats.length - 1; i >= 0; i--) {
-                let h = hats[i];
-                h.update();
-                h.draw();
-
-                // 碰撞判定 (简单的圆圆碰撞)
-                let dx = h.x - player.x;
-                let dy = h.y - player.y;
-                let dist = Math.sqrt(dx*dx + dy*dy);
-                
-                if (!h.collected && dist < (player.r + h.r)) {
-                    // 吃到帽子！
-                    h.collected = true;
-                    state.score++;
-                    updateUI();
-                    spawnParticles(h.x, h.y);
-                    spawnText(h.x, h.y);
-                    
-                    if(state.score >= TARGET_SCORE) {
-                        win();
+                // 碰撞判定
+                if (it.checkCollision(player)) {
+                    // 1. 碰到帽子
+                    if (it instanceof Hat) {
+                        state.score++;
+                        items.splice(i, 1);
+                        spawnParticles(it.x, it.y, '#ffd700');
+                        if (state.score >= TARGET) gameWin();
                     }
-                }
-
-                // 移除出屏幕的
-                if (h.x < -50) hats.splice(i, 1);
-            }
-
-            // 4. 更新障碍
-            for (let i = obstacles.length - 1; i >= 0; i--) {
-                let o = obstacles[i];
-                o.update();
-                o.draw();
-
-                // 碰撞
-                let dx = o.x - player.x;
-                let dy = o.y - player.y;
-                let dist = Math.sqrt(dx*dx + dy*dy);
-                
-                if (dist < (player.r + o.r)) {
-                    if(player.hurtTimer === 0) {
-                        // 撞到了，弹开，但不死
-                        player.hurt();
-                        // 稍微减慢一点点帽子出现速度或屏幕抖动（这里简化为弹开）
-                        ctx.fillStyle = 'rgba(255,255,255,0.5)';
-                        ctx.fillRect(0,0,width,height); // 闪白
+                    // 2. 碰到蛋糕
+                    else if (it instanceof Cake) {
+                        if (state.hp < 3) state.hp++;
+                        items.splice(i, 1);
+                        spawnParticles(it.x, it.y, '#ff6b6b');
                     }
-                }
+                    // 3. 碰到障碍物 (海胆/靴子/锚)
+                    else {
+                        if (player.hurtTimer === 0) {
+                            state.hp--;
+                            player.hurtTimer = 60; // 1秒无敌
+                            spawnParticles(player.x, player.y, '#333'); // 黑烟
+                            
+                            // 屏幕闪红提示受伤
+                            gameWrapper.style.background = '#ff6b6b';
+                            setTimeout(() => {
+                                gameWrapper.style.background = 'linear-gradient(180deg, #4facfe 0%, #00f2fe 100%)';
+                            }, 100);
 
-                if (o.x < -50) obstacles.splice(i, 1);
+                            if(state.hp <= 0) gameOver();
+                        }
+                    }
+                    updateHUD();
+                } 
+                else if (it.markedForDeletion) {
+                    items.splice(i, 1);
+                }
             }
 
-            // 5. 特效绘制
-            // 粒子
-            for (let i=particles.length-1; i>=0; i--) {
+            // 粒子特效
+            for(let i=particles.length-1; i>=0; i--) {
                 let p = particles[i];
                 p.x += p.vx; p.y += p.vy; p.life -= 0.05;
                 if(p.life <=0) { particles.splice(i,1); continue; }
-                ctx.fillStyle = p.color;
                 ctx.globalAlpha = p.life;
+                ctx.fillStyle = p.color;
                 ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill();
-            }
-            // 文字
-            for (let i=popTexts.length-1; i>=0; i--) {
-                let t = popTexts[i];
-                t.dy -= 1; 
-                t.alpha -= 0.02;
-                if(t.alpha <=0) { popTexts.splice(i,1); continue; }
-                ctx.fillStyle = `rgba(255, 255, 255, ${t.alpha})`;
-                ctx.font = 'bold 20px "ZCOOL KuaiLe"';
-                ctx.fillText("+1", t.x, t.y + t.dy);
             }
             ctx.globalAlpha = 1;
 
             requestAnimationFrame(loop);
         }
 
-        
-        /**************************************
-         * 烟花逻辑 (Celebrating)
-         **************************************/
+        // --- 烟花 (庆祝用) ---
         function startFireworks() {
-            const fCanvas = document.getElementById('fireworksCanvas');
-            const fCtx = fCanvas.getContext('2d');
-            fCanvas.width = window.innerWidth;
-            fCanvas.height = window.innerHeight;
+            const fwC = document.getElementById('fwCanvas');
+            const fwCtx = fwC.getContext('2d');
+            fwC.width = window.innerWidth;
+            fwC.height = window.innerHeight;
+            let fws = [];
             
-            let fireworks = [];
-
-            class FireworkParticle {
-                constructor(x, y, color) {
-                    this.x = x; this.y = y; this.color = color;
-                    let angle = Math.random() * Math.PI * 2;
-                    let speed = Math.random() * 4 + 2;
-                    this.vx = Math.cos(angle) * speed;
-                    this.vy = Math.sin(angle) * speed;
-                    this.life = 1; this.decay = Math.random() * 0.02 + 0.01;
-                }
-                update() {
-                    this.x += this.vx; this.y += this.vy;
-                    this.vy += 0.05; // gravity
-                    this.vx *= 0.95; this.vy *= 0.95;
-                    this.life -= this.decay;
-                }
-                draw() {
-                    fCtx.fillStyle = this.color;
-                    fCtx.globalAlpha = this.life;
-                    fCtx.beginPath(); fCtx.arc(this.x, this.y, 3, 0, Math.PI*2); fCtx.fill();
-                }
-            }
-
-            function bang(x, y) {
-                const colors = ['#f1c40f', '#e74c3c', '#8e44ad', '#3498db', '#2ecc71'];
+            function createFW(x,y) {
+                const colors = ['#f1c40f','#e74c3c','#9b59b6','#2ecc71'];
                 const c = colors[Math.floor(Math.random()*colors.length)];
-                for(let i=0; i<40; i++) fireworks.push(new FireworkParticle(x, y, c));
-            }
-
-            // 自动放烟花
-            setInterval(() => {
-                bang(Math.random()*fCanvas.width, Math.random()*fCanvas.height/2 + 50);
-            }, 800);
-
-            function fLoop() {
-                fCtx.clearRect(0,0,fCanvas.width, fCanvas.height);
-                for(let i=fireworks.length-1; i>=0; i--) {
-                    fireworks[i].update();
-                    fireworks[i].draw();
-                    if(fireworks[i].life <= 0) fireworks.splice(i,1);
+                for(let i=0;i<30;i++) {
+                    fws.push({
+                        x:x, y:y, color:c, 
+                        vx:(Math.random()-0.5)*10, vy:(Math.random()-0.5)*10,
+                        life:1
+                    });
                 }
-                requestAnimationFrame(fLoop);
             }
-            fLoop();
+
+            setInterval(() => createFW(Math.random()*width, Math.random()*height/2), 800);
+
+            function fwLoop() {
+                fwCtx.clearRect(0,0,width,height);
+                for(let i=fws.length-1; i>=0; i--) {
+                    let p = fws[i];
+                    p.x+=p.vx; p.y+=p.vy; p.vy+=0.1; p.life-=0.02;
+                    fwCtx.globalAlpha=p.life; fwCtx.fillStyle=p.color;
+                    fwCtx.beginPath(); fwCtx.arc(p.x,p.y,3,0,Math.PI*2); fwCtx.fill();
+                    if(p.life<=0) fws.splice(i,1);
+                }
+                requestAnimationFrame(fwLoop);
+            }
+            fwLoop();
         }
 
     </script>
