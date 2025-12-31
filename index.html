@@ -3,227 +3,425 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>祝小章鱼生日快乐 & 元旦快乐！</title>
+    <title>小章鱼：生日&元旦双倍快乐！</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
     <style>
+        /* --- 全局设置 --- */
         body {
             margin: 0;
             padding: 0;
             overflow: hidden;
-            background: #02001c; /* 深夜深海蓝 */
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            /* 梦幻渐变背景 */
+            background: linear-gradient(135deg, #2a0845 0%, #6441a5 50%, #feada6 100%);
+            font-family: 'ZCOOL KuaiLe', 'YouYuan', 'Fredoka One', cursive, sans-serif; /* 圆润字体 */
+            height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            color: white;
+            position: relative;
         }
 
         canvas {
             position: absolute;
             top: 0;
             left: 0;
-            z-index: 0;
+            z-index: 1; /* 烟花在最底层，但在背景之上 */
+            pointer-events: none;
         }
 
+        /* --- 顶部彩旗装饰 --- */
+        .bunting {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 50px;
+            z-index: 5;
+            display: flex;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .flag {
+            width: 40px;
+            height: 50px;
+            background: #ff6b6b;
+            margin: 0 10px;
+            clip-path: polygon(0 0, 100% 0, 50% 100%);
+            transform-origin: top center;
+            animation: swing 3s ease-in-out infinite;
+        }
+        .flag:nth-child(2n) { background: #feca57; animation-delay: 0.2s; }
+        .flag:nth-child(3n) { background: #48dbfb; animation-delay: 0.4s; }
+        .flag:nth-child(4n) { background: #ff9ff3; animation-delay: 0.6s; }
+        .flag:nth-child(5n) { background: #54a0ff; animation-delay: 0.8s; }
+
+        @keyframes swing {
+            0%, 100% { transform: rotate(-5deg); }
+            50% { transform: rotate(5deg); }
+        }
+
+        /* --- 主容器 --- */
         .container {
             position: relative;
             z-index: 10;
             text-align: center;
-            animation: fadeIn 2s ease-in;
+            width: 100%;
+            max-width: 600px;
         }
 
-        /* 文字样式 */
+        /* --- 气泡背景动画 --- */
+        .bubbles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            overflow: hidden;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+        .bubble {
+            position: absolute;
+            bottom: -50px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            animation: rise 10s infinite ease-in;
+            box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+        @keyframes rise {
+            0% { transform: translateY(0) scale(1); opacity: 0; }
+            20% { opacity: 0.6; }
+            100% { transform: translateY(-120vh) scale(1.5); opacity: 0; }
+        }
+
+        /* --- 文字样式 --- */
+        .title-box {
+            margin-top: 20px;
+            animation: bounceIn 1s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
         h1 {
-            font-size: 3rem;
-            margin-bottom: 20px;
-            text-shadow: 0 0 10px #ff00de, 0 0 20px #ff00de, 0 0 40px #ff00de;
-            background: linear-gradient(to right, #ff9a9e, #fad0c4);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            font-size: 3.5rem;
+            color: #fff;
+            margin: 0;
+            text-shadow: 3px 3px 0px #ff9aa2, 6px 6px 0px rgba(0,0,0,0.2);
+            letter-spacing: 2px;
+            line-height: 1.2;
         }
 
-        p {
-            font-size: 1.5rem;
-            opacity: 0.9;
-            color: #dbeaff;
+        .sub-text {
+            font-size: 1.6rem;
+            color: #fffde7;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 10px 20px;
+            border-radius: 50px;
+            display: inline-block;
+            margin-top: 15px;
+            backdrop-filter: blur(5px);
+            border: 2px solid rgba(255,255,255,0.4);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
 
-        /* --- 小章鱼 CSS 画图 --- */
-        .octopus-wrapper {
+        /* --- 超级可爱的小章鱼 CSS --- */
+        .octopus-scene {
             position: relative;
-            width: 150px;
-            height: 150px;
-            margin: 0 auto 30px;
-            animation: float 3s ease-in-out infinite;
+            height: 250px;
+            width: 200px;
+            margin: 0 auto;
+            /* 整体浮动 */
+            animation: deepFloat 4s ease-in-out infinite;
         }
 
-        .octopus-head {
+        .octopus {
+            position: absolute;
+            top: 50px;
+            left: 40px;
+            width: 120px;
+            z-index: 10;
+        }
+
+        .head {
             width: 120px;
             height: 110px;
-            background-color: #ff8fab;
-            border-radius: 50% 50% 40% 40%;
+            background: radial-gradient(circle at 30% 30%, #ffc3cd, #ff9aa2);
+            border-radius: 50% 50% 45% 45%;
             position: relative;
-            margin: 0 auto;
-            box-shadow: inset -10px -5px 20px rgba(0,0,0,0.1);
+            box-shadow: inset -5px -5px 15px rgba(0,0,0,0.1);
         }
 
-        /* 眼睛 */
-        .eyes {
+        /* 眼睛和腮红 */
+        .face {
             position: absolute;
-            top: 40px;
+            top: 45px;
             width: 100%;
-            display: flex;
-            justify-content: center;
-            gap: 20px;
+            height: 40px;
+            z-index: 20;
         }
-
         .eye {
-            width: 25px;
-            height: 25px;
-            background: white;
-            border-radius: 50%;
-            position: relative;
-        }
-
-        .eye::after {
-            content: '';
-            position: absolute;
-            width: 10px;
-            height: 10px;
+            width: 26px;
+            height: 34px;
             background: #333;
             border-radius: 50%;
-            top: 8px;
-            right: 5px;
-            animation: blink 4s infinite;
-        }
-
-        /* 嘴巴 */
-        .mouth {
             position: absolute;
-            top: 75px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 20px;
-            height: 10px;
-            border-bottom: 3px solid #d65db1;
-            border-radius: 0 0 50% 50%;
+            top: 0;
         }
-
-        /* 触手 */
-        .tentacles {
-            position: absolute;
-            bottom: -15px;
-            left: 15px;
-            display: flex;
-            gap: 2px;
-        }
-
-        .tentacle {
-            width: 18px;
-            height: 30px;
-            background-color: #ff8fab;
-            border-radius: 0 0 15px 15px;
-        }
-
-        /* 生日帽 */
-        .hat {
-            position: absolute;
-            top: -40px;
-            left: 45%;
-            transform: rotate(-15deg);
-            width: 0;
-            height: 0;
-            border-left: 20px solid transparent;
-            border-right: 20px solid transparent;
-            border-bottom: 50px solid #ffd700;
-            z-index: 5;
-        }
+        .eye.left { left: 25px; }
+        .eye.right { right: 25px; }
         
-        .hat::after {
-            content: ''; /* 帽球 */
-            position: absolute;
+        .eye::before { /* 大高光 */
+            content: '';
             width: 12px;
             height: 12px;
             background: white;
             border-radius: 50%;
-            top: 50px; /* actually relative to border box, adjusting */
-            left: -6px;
-            transform: translateY(-56px);
-            box-shadow: 0 0 10px white;
+            position: absolute;
+            top: 6px;
+            left: 5px;
+        }
+        .eye::after { /* 小高光 */
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 18px;
+            right: 4px;
         }
 
         .blush {
-            position: absolute;
-            top: 55px;
-            width: 15px;
-            height: 8px;
-            background: rgba(255, 0, 0, 0.2);
+            width: 18px;
+            height: 10px;
+            background: #ff6b6b;
+            opacity: 0.6;
             border-radius: 50%;
+            position: absolute;
+            top: 30px;
+            animation: pulse 2s infinite;
         }
-        .blush.left { left: 20px; }
-        .blush.right { right: 20px; }
+        .blush.left { left: 15px; }
+        .blush.right { right: 15px; }
 
-        /* 动画定义 */
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-20px); }
-        }
-
-        @keyframes blink {
-            0%, 96%, 100% { transform: scaleY(1); }
-            98% { transform: scaleY(0.1); }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.8); }
-            to { opacity: 1; transform: scale(1); }
+        .mouth {
+            position: absolute;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 16px;
+            height: 10px;
+            border-bottom: 3px solid #d6696b;
+            border-radius: 0 0 50% 50%;
         }
 
-        /* 响应式调整 */
+        /* 触手容器 */
+        .legs {
+            position: absolute;
+            bottom: -15px;
+            left: 5px;
+            width: 110px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .leg {
+            width: 20px;
+            height: 35px;
+            background: #ff9aa2;
+            border-radius: 0 0 20px 20px;
+            transform-origin: top center;
+        }
+        /* 触手独立动画 */
+        .leg:nth-child(1) { animation: wiggle 2.5s ease-in-out infinite; }
+        .leg:nth-child(2) { animation: wiggle 2.8s ease-in-out infinite reverse; height: 40px; }
+        .leg:nth-child(3) { animation: wiggle 2.2s ease-in-out infinite; }
+        .leg:nth-child(4) { animation: wiggle 3s ease-in-out infinite reverse; height: 38px; }
+        .leg:nth-child(5) { animation: wiggle 2.6s ease-in-out infinite; }
+
+        /* 派对帽 */
+        .hat {
+            position: absolute;
+            top: -45px;
+            left: 35px;
+            width: 0;
+            height: 0;
+            border-left: 25px solid transparent;
+            border-right: 25px solid transparent;
+            border-bottom: 60px solid #74b9ff;
+            transform: rotate(-10deg);
+            z-index: 5;
+        }
+        .hat::before { /* 帽子上的条纹 */
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: -15px;
+            width: 30px;
+            height: 10px;
+            background: rgba(255,255,255,0.4);
+            transform: rotate(-5deg);
+        }
+        .hat::after { /* 帽球 */
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -8px;
+            width: 16px;
+            height: 16px;
+            background: #fff;
+            border-radius: 50%;
+            transform: translateY(-50%);
+            box-shadow: 0 0 10px #fff;
+        }
+
+        /* 气球 */
+        .balloon-wrapper {
+            position: absolute;
+            top: -20px;
+            right: -30px;
+            animation: floatBalloon 4s ease-in-out infinite alternate;
+        }
+        .balloon {
+            width: 50px;
+            height: 60px;
+            background: radial-gradient(circle at 30% 30%, #81ecec, #00cec9);
+            border-radius: 50%;
+            position: relative;
+            box-shadow: -2px 2px 10px rgba(0,0,0,0.1);
+        }
+        .string {
+            width: 2px;
+            height: 70px;
+            background: rgba(255,255,255,0.6);
+            position: absolute;
+            bottom: -70px;
+            left: 50%;
+            transform: translateX(-50%);
+            transform-origin: top center;
+        }
+        /* 连接气球和手的线 */
+        .string::after {
+            content:'';
+            width: 6px;
+            height: 6px;
+            background: #ff9aa2; /* 假装是小手抓着 */
+            border-radius: 50%;
+            position: absolute;
+            bottom: 0;
+            left: -2px;
+        }
+
+        /* --- 动画定义 --- */
+        @keyframes deepFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(2deg); }
+        }
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(-10deg); }
+            50% { transform: rotate(10deg); }
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.6; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+        }
+        @keyframes floatBalloon {
+            0% { transform: rotate(-5deg); }
+            100% { transform: rotate(5deg); }
+        }
+        @keyframes bounceIn {
+            0% { opacity: 0; transform: scale(0.3); }
+            50% { opacity: 1; transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); }
+        }
+
+        /* 响应式 */
         @media (max-width: 600px) {
-            h1 { font-size: 2rem; }
-            p { font-size: 1rem; }
+            h1 { font-size: 2.2rem; }
+            .sub-text { font-size: 1.1rem; }
+            .octopus-scene { transform: scale(0.9); }
         }
     </style>
 </head>
 <body>
 
     <canvas id="fireworksCanvas"></canvas>
+    
+    <!-- 顶部彩旗 -->
+    <div class="bunting">
+        <div class="flag"></div>
+        <div class="flag"></div>
+        <div class="flag"></div>
+        <div class="flag"></div>
+        <div class="flag"></div>
+        <div class="flag"></div>
+        <div class="flag"></div>
+        <div class="flag"></div>
+    </div>
+
+    <!-- 气泡层 -->
+    <div class="bubbles" id="bubbleContainer"></div>
 
     <div class="container">
-        <!-- 小章鱼区域 -->
-        <div class="octopus-wrapper">
-            <div class="hat"></div>
-            <div class="octopus-head">
-                <div class="eyes">
-                    <div class="eye"></div>
-                    <div class="eye"></div>
-                </div>
-                <div class="blush left"></div>
-                <div class="blush right"></div>
-                <div class="mouth"></div>
-                <div class="tentacles">
-                    <div class="tentacle"></div>
-                    <div class="tentacle"></div>
-                    <div class="tentacle"></div>
-                    <div class="tentacle"></div>
-                    <div class="tentacle"></div>
+        <!-- 可爱的小章鱼部分 -->
+        <div class="octopus-scene">
+            <div class="balloon-wrapper">
+                <div class="balloon"></div>
+                <div class="string"></div>
+            </div>
+
+            <div class="octopus">
+                <div class="hat"></div>
+                <div class="head">
+                    <div class="face">
+                        <div class="eye left"></div>
+                        <div class="eye right"></div>
+                        <div class="blush left"></div>
+                        <div class="blush right"></div>
+                        <div class="mouth"></div>
+                    </div>
+                    <div class="legs">
+                        <div class="leg"></div>
+                        <div class="leg"></div>
+                        <div class="leg"></div>
+                        <div class="leg"></div>
+                        <div class="leg"></div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <h1>祝小章鱼<br>生日快乐 & 元旦快乐！</h1>
-        <p>新的一年，要每天开心，自由自在！🎇🎂</p>
+        <!-- 祝福文字 -->
+        <div class="title-box">
+            <h1>祝可爱的小章鱼<br>生日快乐！</h1>
+            <div class="sub-text">✨ 元旦快乐 · 2025 暴富暴美 ✨</div>
+        </div>
     </div>
 
     <script>
-        // 烟花特效逻辑
+        // --- 生成上升气泡 ---
+        const bubbleContainer = document.getElementById('bubbleContainer');
+        function createBubble() {
+            const bubble = document.createElement('div');
+            bubble.classList.add('bubble');
+            const size = Math.random() * 40 + 10; // 10px - 50px
+            bubble.style.width = `${size}px`;
+            bubble.style.height = `${size}px`;
+            bubble.style.left = `${Math.random() * 100}%`;
+            bubble.style.animationDuration = `${Math.random() * 5 + 5}s`; // 5s - 10s
+            bubbleContainer.appendChild(bubble);
+
+            // 动画结束后移除
+            setTimeout(() => {
+                bubble.remove();
+            }, 10000);
+        }
+        setInterval(createBubble, 500); // 每0.5秒生成一个
+
+        // --- 柔和可爱的烟花特效 ---
         const canvas = document.getElementById('fireworksCanvas');
         const ctx = canvas.getContext('2d');
         let width, height;
-        let particles = [];
-        let fireworks = [];
-
+        
         function resize() {
             width = canvas.width = window.innerWidth;
             height = canvas.height = window.innerHeight;
@@ -231,110 +429,76 @@
         window.addEventListener('resize', resize);
         resize();
 
-        // 随机颜色
-        function randomColor() {
-            const colors = ['#ff0043', '#14fc56', '#1e90ff', '#ffe100', '#ff00de', '#ffffff'];
-            return colors[Math.floor(Math.random() * colors.length)];
+        // 糖果色系
+        const colors = ['#ff9ff3', '#feca57', '#ff6b6b', '#48dbfb', '#1dd1a1', '#ffffff'];
+
+        let particles = [];
+        
+        // 点击触发
+        document.addEventListener('click', (e) => {
+            explode(e.clientX, e.clientY);
+        });
+
+        // 自动触发
+        setInterval(() => {
+             // 随机位置爆炸
+             explode(Math.random() * width, Math.random() * (height * 0.6));
+        }, 1200);
+
+        function explode(x, y) {
+            const particleCount = 60; // 粒子数量
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle(x, y, color));
+            }
         }
 
-        // 烟花粒子类
         class Particle {
             constructor(x, y, color) {
                 this.x = x;
                 this.y = y;
                 this.color = color;
-                // 爆炸时的随机速度
                 const angle = Math.random() * Math.PI * 2;
-                const speed = Math.random() * 3 + 1;
+                const speed = Math.random() * 4 + 1; // 速度
                 this.vx = Math.cos(angle) * speed;
                 this.vy = Math.sin(angle) * speed;
                 this.alpha = 1;
-                this.decay = Math.random() * 0.015 + 0.01;
-                this.gravity = 0.05;
+                this.friction = 0.96; // 摩擦力，让也发散开得更柔和
+                this.gravity = 0.04;
+                this.size = Math.random() * 3 + 2; // 大一点的圆点
             }
 
             update() {
-                this.vx *= 0.96; // 阻力
-                this.vy *= 0.96;
+                this.vx *= this.friction;
+                this.vy *= this.friction;
                 this.vy += this.gravity;
                 this.x += this.vx;
                 this.y += this.vy;
-                this.alpha -= this.decay;
+                this.alpha -= 0.015;
             }
 
             draw() {
+                ctx.save();
                 ctx.globalAlpha = this.alpha;
                 ctx.fillStyle = this.color;
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
                 ctx.fill();
-            }
-        }
-
-        // 升空的烟花引信类
-        class Firework {
-            constructor() {
-                this.x = Math.random() * width;
-                this.y = height;
-                this.targetY = Math.random() * (height * 0.5);
-                this.speed = Math.random() * 3 + 5;
-                this.color = randomColor();
-                this.radius = 2;
-                this.dead = false;
-            }
-
-            update() {
-                this.y -= this.speed;
-                if (this.y <= this.targetY) {
-                    this.dead = true;
-                    createParticles(this.x, this.y, this.color);
-                }
-            }
-
-            draw() {
-                ctx.globalAlpha = 1;
-                ctx.fillStyle = this.color;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fill();
-                // 尾迹
-                ctx.beginPath();
-                ctx.moveTo(this.x, this.y);
-                ctx.lineTo(this.x, this.y + 10);
-                ctx.strokeStyle = this.color;
-                ctx.stroke();
-            }
-        }
-
-        function createParticles(x, y, color) {
-            for (let i = 0; i < 40; i++) {
-                particles.push(new Particle(x, y, color));
+                ctx.restore();
             }
         }
 
         function loop() {
             requestAnimationFrame(loop);
-            // 产生拖影效果
-            ctx.globalCompositeOperation = 'destination-out';
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-            ctx.fillRect(0, 0, width, height);
-            ctx.globalCompositeOperation = 'lighter';
-
-            // 随机产生新烟花
-            if (Math.random() < 0.03) {
-                fireworks.push(new Firework());
-            }
-
-            // 更新绘制引信
-            for (let i = fireworks.length - 1; i >= 0; i--) {
-                fireworks[i].update();
-                fireworks[i].draw();
-                if (fireworks[i].dead) {
-                    fireworks.splice(i, 1);
-                }
-            }
-
-            // 更新绘制爆炸粒子
+            // 拖尾效果
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'; 
+            // 注意：因为背景是CSS渐变，这里清除画布要用特殊方法保持透明
+            ctx.clearRect(0, 0, width, height);
+            
+            // 为了保留上一帧的粒子残影但不遮挡背景，我们可以只不清除粒子类内部
+            // 但简单的做法是：不清除整个canvas，而是清除旧粒子，或者完全重绘。
+            // 为了视觉效果，我们这里简单直接重绘，不搞复杂拖尾，保持清晰可爱
+            
             for (let i = particles.length - 1; i >= 0; i--) {
                 particles[i].update();
                 particles[i].draw();
@@ -343,14 +507,8 @@
                 }
             }
         }
-
-        // 点击屏幕也会放烟花
-        window.addEventListener('click', (e) => {
-            createParticles(e.clientX, e.clientY, randomColor());
-            createParticles(e.clientX, e.clientY, randomColor());
-        });
-
         loop();
+        
     </script>
 </body>
 </html>
